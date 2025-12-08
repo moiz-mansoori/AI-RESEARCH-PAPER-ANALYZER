@@ -1,11 +1,11 @@
 services:
   - type: web
-    name: research-paper-analyzer
+    name: ai-research-paper-analyzer
     env: python
     region: oregon
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 1 --timeout 300 --preload
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 2 --timeout 300
     healthCheckPath: /
     envVars:
       - key: GROQ_API_KEY

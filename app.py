@@ -52,21 +52,30 @@ if not groq_api_key:
     raise ValueError("GROQ_API_KEY environment variable is required")
 
 llm_model = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
-# Using L3 model (faster) instead of L6 - 2x speedup with minimal quality loss
-embedding_model = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L3-v2")
+# Using smallest model for Render free tier (512MB RAM limit)
+embedding_model = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 
-# Initialize LLM
+# Initialize LLM (lightweight, just API calls)
 llm = ChatGroq(groq_api_key=groq_api_key, model_name=llm_model)
 
-# Initialize embeddings with multi-threading for faster CPU inference
-embedder = HuggingFaceEmbeddings(
-    model_name=embedding_model,
-    cache_folder="./model_cache",
-    encode_kwargs={
-        "normalize_embeddings": True,
-        "batch_size": 32  # Process 32 chunks at once for speed
-    }
-)
+# Lazy-load embeddings to reduce memory at startup
+_embedder = None
+
+def get_embedder():
+    """Lazy load embeddings to reduce startup memory on Render free tier."""
+    global _embedder
+    if _embedder is None:
+        logger.info("Loading embedding model...")
+        _embedder = HuggingFaceEmbeddings(
+            model_name=embedding_model,
+            cache_folder="./model_cache",
+            encode_kwargs={
+                "normalize_embeddings": True,
+                "batch_size": 8  # Small batch for low memory
+            }
+        )
+        logger.info("Embedding model loaded successfully")
+    return _embedder
 
 # In-memory user session storage (use Redis in production for multi-worker support)
 user_sessions = {}
@@ -210,7 +219,7 @@ def chat():
             db_path = f"vector_dbs/{session_id}"
             user_data['vector_db'] = create_vector_db(
                 text=user_data['full_text'],
-                embedder=embedder,
+                embedder=get_embedder(),
                 db_path=db_path
             )
         
