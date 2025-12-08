@@ -15,6 +15,48 @@
 
 ---
 
+## 🤔 What is AI Research Paper Analyzer?
+
+AI Research Paper Analyzer is an intelligent web application that helps researchers, students, and academics **understand complex research papers faster**. Instead of spending hours reading dense academic content, simply upload a PDF and let AI do the heavy lifting.
+
+### The Problem It Solves
+
+Reading research papers is time-consuming and challenging:
+- 📚 Papers are often 20-50 pages long
+- 🔬 Technical jargon makes understanding difficult
+- ⏰ Finding specific information takes forever
+- 🧠 Remembering key points across multiple papers is hard
+
+### The Solution
+
+This tool uses **Retrieval-Augmented Generation (RAG)** to:
+1. **Extract** all text and sections from your PDF
+2. **Understand** the paper using vector embeddings
+3. **Summarize** any section in simple terms
+4. **Answer questions** about the paper accurately
+
+---
+
+## 💡 What Can It Do?
+
+| Capability | Description |
+|------------|-------------|
+| 📤 **Upload PDF** | Drag & drop any research paper (up to 16 MB) |
+| 🗂️ **Auto-detect Sections** | Automatically finds Abstract, Introduction, Methods, Results, etc. |
+| 📝 **Generate Summaries** | Get AI-powered summaries of any section in seconds |
+| 💬 **Chat with Paper** | Ask questions like "What are the main findings?" or "Explain the methodology" |
+| 🎯 **Accurate Answers** | Uses RAG to only answer from the paper content, no hallucinations |
+| ⚡ **Fast Processing** | Powered by Groq's ultra-fast Llama 3.3 70B model |
+
+### Example Questions You Can Ask:
+- "What is the main contribution of this paper?"
+- "Summarize the experimental results"
+- "What datasets were used?"
+- "Explain the proposed architecture in simple terms"
+- "What are the limitations mentioned by the authors?"
+
+---
+
 ## ✨ Features
 
 | Feature | Description |
