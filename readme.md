@@ -22,7 +22,7 @@ AI Research Paper Analyzer is an intelligent web application that helps research
 ### The Problem It Solves
 
 Reading research papers is time-consuming and challenging:
-- 📚 Papers are often 20-50 pages long
+- 📚 Papers are often 50-100 pages long
 - 🔬 Technical jargon makes understanding difficult
 - ⏰ Finding specific information takes forever
 - 🧠 Remembering key points across multiple papers is hard
