@@ -269,7 +269,7 @@ ai-research-paper-analyzer/
 |----------|----------|---------|-------------|
 | `GROQ_API_KEY` | ✅ Yes | - | Your Groq API key |
 | `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Groq model |
-| `EMBEDDING_MODEL` | No | `all-MiniLM-L3-v2` | HuggingFace model |
+| `EMBEDDING_MODEL` | No | `all-MiniLM-L6-v2` | HuggingFace model |
 
 ---
 

@@ -1,5 +1,5 @@
 # src/RAG_retrival_chain.py
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 
 
