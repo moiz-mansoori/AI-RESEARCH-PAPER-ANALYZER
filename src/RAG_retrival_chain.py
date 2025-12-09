@@ -1,18 +1,20 @@
 # src/RAG_retrival_chain.py
-from langchain_core.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 
 
 def get_qa_chain(vectordb, llm):
     """
     Create a RAG-based QA chain for answering questions about research papers.
+    Uses modern LangChain LCEL pattern.
     
     Args:
         vectordb: FAISS vector database with embedded document chunks
         llm: Language model for generating responses
         
     Returns:
-        RetrievalQA chain configured for research paper analysis
+        Retrieval chain configured for research paper analysis
     """
     
     # Configure retriever with proper parameters
@@ -24,14 +26,10 @@ def get_qa_chain(vectordb, llm):
     )
     
     # Improved prompt for research paper analysis
-    prompt_template = """You are an AI research assistant analyzing an academic paper.
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are an AI research assistant analyzing an academic paper.
 
 Answer the question ONLY using the context provided below. Do not use prior knowledge or make assumptions beyond what is explicitly stated.
-
-CONTEXT (from the research paper):
-{context}
-
-QUESTION: {question}
 
 INSTRUCTIONS:
 1. If the answer is clearly stated in the context, provide a clear and concise response.
@@ -39,22 +37,19 @@ INSTRUCTIONS:
 3. If the answer is partially available, provide what you can find and note what's missing.
 4. If the answer is NOT present in the context, respond exactly: "I couldn't find this information in the uploaded paper."
 5. Do not speculate or add information that isn't in the context.
-6. Use clear formatting with bullet points or numbered lists when listing multiple items.
+6. Use clear formatting with bullet points or numbered lists when listing multiple items."""),
+        ("human", """CONTEXT (from the research paper):
+{context}
 
-ANSWER:"""
+QUESTION: {input}
 
-    PROMPT = PromptTemplate(
-        template=prompt_template,
-        input_variables=["context", "question"]
-    )
+ANSWER:""")
+    ])
     
-    chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=retriever,
-        input_key="query",
-        return_source_documents=True,
-        chain_type_kwargs={"prompt": PROMPT}
-    )
+    # Create the document chain
+    document_chain = create_stuff_documents_chain(llm, prompt)
+    
+    # Create the retrieval chain
+    chain = create_retrieval_chain(retriever, document_chain)
     
     return chain

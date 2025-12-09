@@ -225,8 +225,8 @@ def chat():
         
         chain = get_qa_chain(vectordb=user_data['vector_db'], llm=llm)
         
-        result = chain.invoke(user_message)
-        ai_response = result.get('result', 'Unable to generate response.')
+        result = chain.invoke({"input": user_message})
+        ai_response = result.get('answer', 'Unable to generate response.')
         
         return jsonify({"response": ai_response})
         
