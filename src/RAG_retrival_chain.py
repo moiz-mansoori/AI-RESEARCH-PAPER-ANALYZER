@@ -1,13 +1,18 @@
 # src/RAG_retrival_chain.py
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+
+def format_docs(docs):
+    """Format retrieved documents into a single string."""
+    return "\n\n".join(doc.page_content for doc in docs)
 
 
 def get_qa_chain(vectordb, llm):
     """
     Create a RAG-based QA chain for answering questions about research papers.
-    Uses modern LangChain LCEL pattern.
+    Uses modern LangChain LCEL pattern with langchain_core imports only.
     
     Args:
         vectordb: FAISS vector database with embedded document chunks
@@ -46,10 +51,27 @@ QUESTION: {input}
 ANSWER:""")
     ])
     
-    # Create the document chain
-    document_chain = create_stuff_documents_chain(llm, prompt)
+    # Build LCEL chain using RunnablePassthrough
+    # This pattern retrieves docs, formats them, and passes to LLM
+    chain = (
+        {
+            "context": retriever | format_docs,
+            "input": RunnablePassthrough()
+        }
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
     
-    # Create the retrieval chain
-    chain = create_retrieval_chain(retriever, document_chain)
+    # Wrap in a function that returns dict format expected by app.py
+    class ChainWrapper:
+        def __init__(self, chain):
+            self._chain = chain
+        
+        def invoke(self, inputs):
+            """Invoke chain and return dict with 'answer' key."""
+            question = inputs.get("input", "")
+            result = self._chain.invoke(question)
+            return {"answer": result}
     
-    return chain
+    return ChainWrapper(chain)
