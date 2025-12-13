@@ -135,10 +135,7 @@ Visit **http://localhost:5000** in your browser.
 ## 🌐 Free Deployment Option.
 
 <<<<<<< HEAD
-### Render.com (Recommended) ⭐
-=======
 ### Render.com ⭐
->>>>>>> 59991cb (docs: Add screenshots to README)
 
 **Best for:** Easy deployment, auto-deploy from GitHub
 
@@ -164,7 +161,6 @@ Visit **http://localhost:5000** in your browser.
 
 
 =======
->>>>>>> 59991cb (docs: Add screenshots to README)
 ## 📖 API Reference
 
 ### Upload PDF
