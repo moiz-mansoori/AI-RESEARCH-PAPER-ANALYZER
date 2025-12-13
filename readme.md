@@ -122,7 +122,7 @@ Visit **http://localhost:5000** in your browser.
 
 ---
 
-## 🌐 Free Deployment Options
+## 🌐 Free Deployment Option.
 
 ### Render.com (Recommended) ⭐
 
