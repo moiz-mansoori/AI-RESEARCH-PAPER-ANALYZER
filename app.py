@@ -1,6 +1,5 @@
 # app.py
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
@@ -52,8 +51,9 @@ if not groq_api_key:
     raise ValueError("GROQ_API_KEY environment variable is required")
 
 llm_model = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
-# Using smallest model for Render free tier (512MB RAM limit)
-embedding_model = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+
+# Check for Cohere API key (cloud embeddings - recommended for Render)
+cohere_api_key = os.getenv("COHERE_API_KEY")
 
 # Initialize LLM (lightweight, just API calls)
 llm = ChatGroq(groq_api_key=groq_api_key, model_name=llm_model)
@@ -62,19 +62,37 @@ llm = ChatGroq(groq_api_key=groq_api_key, model_name=llm_model)
 _embedder = None
 
 def get_embedder():
-    """Lazy load embeddings to reduce startup memory on Render free tier."""
+    """
+    Get embedder - uses Cohere cloud embeddings if API key is set,
+    otherwise falls back to local HuggingFace embeddings.
+    
+    Cloud embeddings are recommended for Render free tier (512MB RAM).
+    """
     global _embedder
     if _embedder is None:
-        logger.info("Loading embedding model...")
-        _embedder = HuggingFaceEmbeddings(
-            model_name=embedding_model,
-            cache_folder="./model_cache",
-            encode_kwargs={
-                "normalize_embeddings": True,
-                "batch_size": 8  # Small batch for low memory
-            }
-        )
-        logger.info("Embedding model loaded successfully")
+        if cohere_api_key:
+            # Use Cohere cloud embeddings (low memory, fast)
+            logger.info("Using Cohere cloud embeddings...")
+            from langchain_cohere import CohereEmbeddings
+            _embedder = CohereEmbeddings(
+                cohere_api_key=cohere_api_key,
+                model="embed-english-v3.0"
+            )
+            logger.info("Cohere cloud embeddings initialized successfully")
+        else:
+            # Fallback to local HuggingFace embeddings
+            logger.info("COHERE_API_KEY not set, using local HuggingFace embeddings...")
+            from langchain_huggingface import HuggingFaceEmbeddings
+            embedding_model = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+            _embedder = HuggingFaceEmbeddings(
+                model_name=embedding_model,
+                cache_folder="./model_cache",
+                encode_kwargs={
+                    "normalize_embeddings": True,
+                    "batch_size": 8  # Small batch for low memory
+                }
+            )
+            logger.info("HuggingFace embedding model loaded successfully")
     return _embedder
 
 # In-memory user session storage (use Redis in production for multi-worker support)

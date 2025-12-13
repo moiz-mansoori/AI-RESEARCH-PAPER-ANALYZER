@@ -104,7 +104,13 @@ Create a `.env` file in the project root:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
+
+# Optional: Cohere API for cloud embeddings (recommended for Render deployment)
+# Get free API key at https://dashboard.cohere.com/api-keys
+COHERE_API_KEY=your_cohere_api_key_here
 ```
+
+> **Note:** If `COHERE_API_KEY` is not set, the app will use local HuggingFace embeddings (uses more RAM).
 
 ### Run Locally
 
@@ -274,8 +280,9 @@ ai-research-paper-analyzer/
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `GROQ_API_KEY` | ✅ Yes | - | Your Groq API key |
+| `COHERE_API_KEY` | ⭐ Recommended | - | Cohere API for cloud embeddings (free) |
 | `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Groq model |
-| `EMBEDDING_MODEL` | No | `all-MiniLM-L6-v2` | HuggingFace model |
+| `EMBEDDING_MODEL` | No | `all-MiniLM-L6-v2` | HuggingFace model (fallback) |
 
 ---
 
