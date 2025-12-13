@@ -45,7 +45,7 @@ This tool uses **Retrieval-Augmented Generation (RAG)** to:
 | 🗂️ **Auto-detect Sections** | Automatically finds Abstract, Introduction, Methods, Results, etc. |
 | 📝 **Generate Summaries** | Get AI-powered summaries of any section in seconds |
 | 💬 **Chat with Paper** | Ask questions like "What are the main findings?" or "Explain the methodology" |
-| 🎯 **Accurate Answers** | Uses RAG to only answer from the paper content, no hallucinations |
+| 🎯 **Smart Answers** | Prioritizes paper content, but falls back to general AI knowledge when needed |
 | ⚡ **Fast Processing** | Powered by Groq's ultra-fast Llama 3.3 70B model |
 
 ### Example Questions You Can Ask:
@@ -64,6 +64,7 @@ This tool uses **Retrieval-Augmented Generation (RAG)** to:
 | 📄 **PDF Analysis** | Upload research papers and automatically extract text and sections |
 | 🧠 **AI Summarization** | Generate detailed summaries for any section using Llama 3.3 70B |
 | 💬 **RAG Chat** | Ask questions about your paper with context-aware responses |
+| 🧪 **Hybrid Knowledge** | If info isn't in the paper, AI provides general knowledge with clear distinction |
 | 🔍 **Section Detection** | Automatically identify Abstract, Introduction, Methods, Results, etc. |
 | ⚡ **Fast Embeddings** | HuggingFace sentence transformers for semantic search |
 | 🔒 **Production-Ready** | Rate limiting, input validation, and XSS protection |
@@ -86,7 +87,12 @@ cd ai-research-paper-analyzer
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On Linux/Mac:
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt

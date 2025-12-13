@@ -30,19 +30,30 @@ def get_qa_chain(vectordb, llm):
         }
     )
     
-    # Improved prompt for research paper analysis
+    # Improved prompt for research paper analysis with fallback to general knowledge
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are an AI research assistant analyzing an academic paper.
 
-Answer the question ONLY using the context provided below. Do not use prior knowledge or make assumptions beyond what is explicitly stated.
+Your primary goal is to answer questions using the context from the uploaded paper. However, if the information is not available in the paper, you should still help the user by providing your general knowledge.
 
 INSTRUCTIONS:
-1. If the answer is clearly stated in the context, provide a clear and concise response.
-2. Quote relevant passages when appropriate to support your answer.
-3. If the answer is partially available, provide what you can find and note what's missing.
-4. If the answer is NOT present in the context, respond exactly: "I couldn't find this information in the uploaded paper."
-5. Do not speculate or add information that isn't in the context.
-6. Use clear formatting with bullet points or numbered lists when listing multiple items."""),
+1. FIRST, search the provided context for relevant information.
+2. If the answer IS found in the context:
+   - Provide a clear and concise response based on the paper.
+   - Quote relevant passages when appropriate to support your answer.
+   - Use clear formatting with bullet points or numbered lists when listing multiple items.
+
+3. If the answer is NOT found in the context:
+   - Start with: "📚 I couldn't find this specific information in the uploaded research paper."
+   - Then add: "However, based on my general knowledge:"
+   - Provide a helpful answer from your training knowledge.
+   - Make it clear this is general knowledge, not from the paper.
+
+4. If the answer is PARTIALLY available:
+   - Provide what you found in the paper first.
+   - Then supplement with general knowledge if helpful, clearly marking it as such.
+
+Remember: Always be helpful! Never leave the user with just "I don't know" - provide value either from the paper or your general knowledge."""),
         ("human", """CONTEXT (from the research paper):
 {context}
 
