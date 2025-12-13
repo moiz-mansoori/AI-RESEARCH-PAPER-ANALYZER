@@ -55,6 +55,16 @@ This tool uses **Retrieval-Augmented Generation (RAG)** to:
 - "Explain the proposed architecture in simple terms"
 - "What are the limitations mentioned by the authors?"
 
+### 📸 Screenshots
+
+**AI-Powered Summary Generation:**
+
+![Summary Feature](docs/screenshot-summary.png)
+
+**Chat with Your Research Paper:**
+
+![Chat Feature](docs/screenshot-chat.png)
+
 ---
 
 ## ✨ Features
@@ -124,7 +134,11 @@ Visit **http://localhost:5000** in your browser.
 
 ## 🌐 Free Deployment Option.
 
+<<<<<<< HEAD
 ### Render.com (Recommended) ⭐
+=======
+### Render.com ⭐
+>>>>>>> 59991cb (docs: Add screenshots to README)
 
 **Best for:** Easy deployment, auto-deploy from GitHub
 
@@ -145,9 +159,12 @@ Visit **http://localhost:5000** in your browser.
 
 > ⚠️ **Note:** Free tier sleeps after 15 min. First request takes ~30-60s to wake.
 
+<<<<<<< HEAD
 ---
 
 
+=======
+>>>>>>> 59991cb (docs: Add screenshots to README)
 ## 📖 API Reference
 
 ### Upload PDF
@@ -206,7 +223,7 @@ ai-research-paper-analyzer/
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `GROQ_API_KEY` | ✅ Yes | - | Your Groq API key |
-| `COHERE_API_KEY` | ⭐ Recommended | - | Cohere API for cloud embeddings (free) |
+| `COHERE_API_KEY` | ⭐ Recommended | - | Cohere API for cloud embeddings |
 | `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Groq model |
 | `EMBEDDING_MODEL` | No | `all-MiniLM-L6-v2` | HuggingFace model (fallback) |
 
