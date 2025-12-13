@@ -124,7 +124,7 @@ Visit **http://localhost:5000** in your browser.
 
 ## 🌐 Free Deployment Options
 
-### Option 1: Render.com (Recommended) ⭐
+### Render.com (Recommended) ⭐
 
 **Best for:** Easy deployment, auto-deploy from GitHub
 
@@ -147,80 +147,6 @@ Visit **http://localhost:5000** in your browser.
 
 ---
 
-### Option 2: Railway.app
-
-**Best for:** Simple CLI deployment
-
-| Feature | Details |
-|---------|---------|
-| **Free Tier** | $5 credit/month |
-| **RAM** | 512 MB |
-| **Sleep** | After 5 min inactivity |
-| **CLI** | One-command deploy |
-
-**Steps:**
-```bash
-npm install -g @railway/cli
-railway login
-railway init
-railway up
-```
-
-Set `GROQ_API_KEY` in Railway dashboard.
-
----
-
-### Option 3: Hugging Face Spaces
-
-**Best for:** ML/AI projects, generous free tier
-
-| Feature | Details |
-|---------|---------|
-| **Free Tier** | 2 vCPU, 16 GB RAM |
-| **Sleep** | After 48 hours inactivity |
-| **GPU** | Free T4 GPU available! |
-
-**Steps:**
-1. Create account at [huggingface.co](https://huggingface.co)
-2. New Space → Select "Docker" or "Gradio"
-3. Upload your code
-4. Add `GROQ_API_KEY` as secret
-
----
-
-### Option 4: Fly.io
-
-**Best for:** Global edge deployment
-
-| Feature | Details |
-|---------|---------|
-| **Free Tier** | 3 shared VMs |
-| **RAM** | 256 MB each |
-| **Regions** | Deploy globally |
-
-**Steps:**
-```bash
-# Install flyctl
-curl -L https://fly.io/install.sh | sh
-
-fly auth signup
-fly launch
-fly secrets set GROQ_API_KEY=your_key
-fly deploy
-```
-
----
-
-### Comparison Table
-
-| Platform | Free Tier | RAM | Sleep Time | Best For |
-|----------|-----------|-----|------------|----------|
-| **Render** ⭐ | 750 hrs/mo | 512 MB | 15 min | Beginners |
-| **Railway** | $5/mo | 512 MB | 5 min | CLI users |
-| **HF Spaces** | Unlimited | 16 GB | 48 hrs | ML projects |
-| **Fly.io** | 3 VMs | 256 MB | Never | Global apps |
-
----
 
 ## 📖 API Reference
 
