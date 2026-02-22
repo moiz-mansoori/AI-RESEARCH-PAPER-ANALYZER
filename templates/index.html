@@ -34,65 +34,71 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 50px;
-            background: linear-gradient(90deg, #000, #333);
-            /* black → dark silver */
+            padding: 18px 60px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
             color: #fff;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
-
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            cursor: pointer;
         }
 
         .logo img {
-            height: 40px;
-            width: 40px;
+            height: 38px;
+            width: 38px;
             object-fit: cover;
             border-radius: 50%;
-        
+            border: 2px solid rgba(0, 188, 212, 0.4);
         }
 
         .logo span {
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
+            letter-spacing: 0.5px;
         }
-
 
         nav ul {
             display: flex;
-            gap: 25px;
+            gap: 35px;
             list-style: none;
         }
 
         nav ul li {
             cursor: pointer;
             transition: 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.75);
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        nav ul li::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #00bcd4;
+            transition: width 0.3s ease;
         }
 
         nav ul li:hover {
-            color: #c0c0c0;
-        }
-
-        nav button {
-            padding: 8px 18px;
-            border: none;
-            background: #444;
             color: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
         }
 
-        nav button:hover {
-            background: #666;
+        nav ul li:hover::after {
+            width: 100%;
         }
 
         /* HERO */
@@ -283,18 +289,32 @@
         .progress-container {
             width: 80%;
             margin: 30px auto 0 auto;
-            height: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+        }
+
+        .progress-track {
+            height: 18px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .progress-bar {
             width: 0;
             height: 100%;
-            background: #00bcd4;
-            border-radius: 15px;
-            transition: width 0.5s;
+            background: linear-gradient(90deg, #00bcd4, #26c6da, #00e5ff);
+            border-radius: 12px;
+            transition: width 0.4s ease;
+            box-shadow: 0 0 12px rgba(0, 188, 212, 0.4);
         }
 
         .summary {
@@ -428,24 +448,26 @@
             text-align: center;
             line-height: 1.8;
         }
-/* FOOTER */
-footer {
-    background: linear-gradient(90deg, #000, #333);
-    color: #fff;
-    text-align: center;
-    padding: 35px;
-}
 
-footer a {
-    color: #c0c0c0;
-    margin: 0 10px;
-    text-decoration: none;
-    font-size: 1.2em;
-}
+        /* FOOTER */
+        footer {
+            background: linear-gradient(90deg, #000, #333);
+            color: #fff;
+            text-align: center;
+            padding: 35px;
+        }
 
-footer a:hover {
-    text-decoration: underline;
-}
+        footer a {
+            color: #c0c0c0;
+            margin: 0 10px;
+            text-decoration: none;
+            font-size: 1.2em;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
         /* RESPONSIVE */
         @media(max-width:768px) {
             nav {
@@ -472,20 +494,15 @@ footer a:hover {
 
     <!-- NAVBAR -->
     <nav>
-       
-        <div class="logo">
+        <div class="logo" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
             <img src="static/moiz123.png" alt="Logo">
             <span>ResearchPortal</span>
-        </div> 
+        </div>
         <ul>
-            <li>Home</li>
-            <li>Features</li>
-            <li>Upload</li>
-            <li>Visualizations</li>
-            <li>About</li>
-            <li>Contact</li>
+            <li onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Features</li>
+            <li onclick="document.getElementById('uploadSection').scrollIntoView({behavior:'smooth'})">Upload</li>
+            <li onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">About</li>
         </ul>
-        <button>Login</button>
     </nav>
 
     <!-- HERO -->
@@ -517,7 +534,13 @@ footer a:hover {
         <input type="file" id="pdfFile" accept=".pdf" style="display:none;">
 
         <div class="progress-container" id="progressContainer" style="display:none;">
-            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-info">
+                <span id="progressLabel">Uploading...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
         </div>
 
         <!-- Topics Dropdown -->
@@ -567,22 +590,13 @@ footer a:hover {
         </div>
     </section>
 
-    <!-- VISUALIZATIONS -->
-    <section id="visualizations">
-        <h2>Analysis Visualizations</h2>
-        <div id="charts-container">
-            <div class="chart-card">Keyword Frequency Chart</div>
-            <div class="chart-card">Topic Trend Chart</div>
-        </div>
-    </section>
-
     <!-- FOOTER -->
-<!-- FOOTER -->
-<footer>
-    &copy; 2025 ResearchPortal |
-    <a href="https://github.com/moiz-mansoori" target="_blank">GitHub</a> |
-    <a href="https://www.linkedin.com/in/moiz-mansoori03/" target="_blank">LinkedIn</a>
-</footer>
+    <!-- FOOTER -->
+    <footer>
+        &copy; 2025 ResearchPortal |
+        <a href="https://github.com/moiz-mansoori" target="_blank">GitHub</a> |
+        <a href="https://www.linkedin.com/in/moiz-mansoori03/" target="_blank">LinkedIn</a>
+    </footer>
 
     <script>
         // Demo topics for uploaded PDF
@@ -622,40 +636,72 @@ footer a:hover {
         function handleFile() {
             const file = fileInput.files[0];
             if (!file) return;
+
+            // Reset UI
             progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
+            progressBar.style.width = '5%';
+            progressBar.style.background = '';
+            document.getElementById('progressLabel').textContent = 'Uploading file...';
+            document.getElementById('progressPercent').textContent = '0%';
             topicSection.style.display = 'none';
             summarySection.style.display = 'none';
             chatSection.style.display = 'none';
 
-            let width = 0;
-            const interval = setInterval(() => {
-                if (width >= 100) {
-                    clearInterval(interval);
-                    // Demo topics and summaries
+            // Go straight to backend
+            processFileOnBackend(file);
+        }
 
-                    // Send file to Flask backend
-                    const formData = new FormData();
-                    formData.append('file', file);
+        function processFileOnBackend(file) {
+            const formData = new FormData();
+            formData.append('file', file);
 
-                    fetch('/upload', { method: 'POST', body: formData })
-                        .then(res => res.json())
-                        .then(data => {
-                            topicSelect.innerHTML = '';
-                            data.topics.forEach(t => {
-                                let opt = document.createElement('option');
-                                opt.value = t;
-                                opt.innerText = t;
-                                topicSelect.appendChild(opt);
-                            });
-                            topicSection.style.display = 'block';
+            // Start polling for real progress
+            const pollInterval = setInterval(() => {
+                fetch('/upload-status')
+                    .then(res => res.json())
+                    .then(status => {
+                        const pct = Math.round((status.step / status.total) * 100);
+                        progressBar.style.width = Math.max(pct, 10) + '%';
+                        document.getElementById('progressPercent').textContent = pct + '%';
+                        document.getElementById('progressLabel').textContent = status.message || 'Processing...';
+                    })
+                    .catch(() => { });
+            }, 500);
+
+            fetch('/upload', { method: 'POST', body: formData })
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => Promise.reject(err));
+                    return res.json();
+                })
+                .then(data => {
+                    clearInterval(pollInterval);
+                    progressBar.style.width = '100%';
+                    document.getElementById('progressPercent').textContent = '100%';
+                    document.getElementById('progressLabel').textContent = 'Done!';
+                    setTimeout(() => {
+                        topicSelect.innerHTML = '';
+                        data.topics.forEach(t => {
+                            let opt = document.createElement('option');
+                            opt.value = t;
+                            opt.innerText = t;
+                            topicSelect.appendChild(opt);
                         });
-
-                } else {
-                    width += 10;
-                    progressBar.style.width = width + '%';
-                }
-            }, 200);
+                        topicSection.style.display = 'block';
+                        progressContainer.style.display = 'none';
+                    }, 600);
+                })
+                .catch(err => {
+                    clearInterval(pollInterval);
+                    document.getElementById('progressLabel').textContent = 'Error!';
+                    document.getElementById('progressPercent').textContent = '✕';
+                    progressBar.style.width = '100%';
+                    progressBar.style.background = '#ff4444';
+                    setTimeout(() => {
+                        alert(err.error || "Failed to process PDF.");
+                        progressContainer.style.display = 'none';
+                        progressBar.style.background = '';
+                    }, 1000);
+                });
         }
 
         function formatSummary(text) {

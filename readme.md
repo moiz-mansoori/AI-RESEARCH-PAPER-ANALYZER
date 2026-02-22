@@ -9,7 +9,7 @@
 
 **Upload academic papers, extract key insights, and chat with your research using AI.**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Deployment](#-free-deployment-options) • [API Reference](#-api-reference)
+[Features](#-features) • [Quick Start](#-quick-start) • [Deployment](#-free-deployment-option) • [API Reference](#-api-reference)
 
 </div>
 
@@ -37,47 +37,24 @@ This tool uses **Retrieval-Augmented Generation (RAG)** to:
 
 ---
 
-## 💡 What Can It Do?
+## ✨ Features
 
-| Capability | Description |
-|------------|-------------|
-| 📤 **Upload PDF** | Drag & drop any research paper (up to 16 MB) |
-| 🗂️ **Auto-detect Sections** | Automatically finds Abstract, Introduction, Methods, Results, etc. |
-| 📝 **Generate Summaries** | Get AI-powered summaries of any section in seconds |
-| 💬 **Chat with Paper** | Ask questions like "What are the main findings?" or "Explain the methodology" |
-| 🎯 **Smart Answers** | Prioritizes paper content, but falls back to general AI knowledge when needed |
-| ⚡ **Fast Processing** | Powered by Groq's ultra-fast Llama 3.3 70B model |
+| Feature | Description |
+|---------|-------------|
+| 📄 **PDF Upload & Analysis** | Drag & drop research papers (up to 16 MB), with real-time progress tracking |
+| 🗂️ **Auto Section Detection** | Automatically finds Abstract, Introduction, Methods, Results, etc. using fast regex |
+| 🧠 **AI Summarization** | Generate detailed summaries for any section using Llama 3.3 70B |
+| 💬 **RAG-Powered Chat** | Ask questions about your paper with context-aware responses from FAISS vector search |
+| 🧪 **Hybrid Knowledge** | If info isn't in the paper, AI provides general knowledge with clear distinction |
+| ⚡ **Instant Startup** | Lazy-loaded LLM & embeddings — server starts in seconds |
+| 🔒 **Production-Ready** | Rate limiting, input validation, CORS, XSS protection, and session isolation |
 
-### Example Questions You Can Ask:
+### Example Questions You Can Ask
 - "What is the main contribution of this paper?"
 - "Summarize the experimental results"
 - "What datasets were used?"
 - "Explain the proposed architecture in simple terms"
 - "What are the limitations mentioned by the authors?"
-
-### 📸 Screenshots
-
-**AI-Powered Summary Generation:**
-
-![Summary Feature](docs/screenshot-summary.png)
-
-**Chat with Your Research Paper:**
-
-![Chat Feature](docs/screenshot-chat.png)
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 📄 **PDF Analysis** | Upload research papers and automatically extract text and sections |
-| 🧠 **AI Summarization** | Generate detailed summaries for any section using Llama 3.3 70B |
-| 💬 **RAG Chat** | Ask questions about your paper with context-aware responses |
-| 🧪 **Hybrid Knowledge** | If info isn't in the paper, AI provides general knowledge with clear distinction |
-| 🔍 **Section Detection** | Automatically identify Abstract, Introduction, Methods, Results, etc. |
-| ⚡ **Fast Embeddings** | HuggingFace sentence transformers for semantic search |
-| 🔒 **Production-Ready** | Rate limiting, input validation, and XSS protection |
 
 ---
 
@@ -87,13 +64,14 @@ This tool uses **Retrieval-Augmented Generation (RAG)** to:
 
 - Python 3.11+
 - [Groq API Key](https://console.groq.com/) (free tier available)
+- [Cohere API Key](https://dashboard.cohere.com/api-keys) (recommended for cloud embeddings)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/moiz-mansoori/ai-research-paper-analyzer.git
-cd ai-research-paper-analyzer
+git clone https://github.com/moiz-mansoori/AI-RESEARCH-PAPER-ANALYZER.git
+cd AI-RESEARCH-PAPER-ANALYZER
 
 # Create virtual environment
 python -m venv venv
@@ -110,14 +88,20 @@ pip install -r requirements.txt
 
 ### Configuration
 
-Create a `.env` file in the project root:
+Copy the example environment file and fill in your keys:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your API keys:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
-
-# Optional: Cohere API for cloud embeddings (recommended for Render deployment)
-# Get free API key at https://dashboard.cohere.com/api-keys
 COHERE_API_KEY=your_cohere_api_key_here
+FLASK_SECRET_KEY=AI_researchpaper_analyzer
+LLM_MODEL=llama-3.3-70b-versatile
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 ```
 
 > **Note:** If `COHERE_API_KEY` is not set, the app will use local HuggingFace embeddings (uses more RAM).
@@ -132,13 +116,9 @@ Visit **http://localhost:5000** in your browser.
 
 ---
 
-## 🌐 Free Deployment Option.
+## 🌐 Free Deployment Option
 
-<<<<<<< HEAD
-### Render.com (Recommended) ⭐
-=======
 ### Render.com ⭐
->>>>>>> 59991cb (docs: Add screenshots to README)
 
 **Best for:** Easy deployment, auto-deploy from GitHub
 
@@ -155,16 +135,14 @@ Visit **http://localhost:5000** in your browser.
 3. Connect your GitHub repo
 4. Set environment variables:
    - `GROQ_API_KEY` = your key
+   - `COHERE_API_KEY` = your key (recommended)
+   - `FLASK_SECRET_KEY` = `AI_researchpaper_analyzer`
 5. Deploy!
 
 > ⚠️ **Note:** Free tier sleeps after 15 min. First request takes ~30-60s to wake.
 
-<<<<<<< HEAD
 ---
 
-
-=======
->>>>>>> 59991cb (docs: Add screenshots to README)
 ## 📖 API Reference
 
 ### Upload PDF
@@ -178,6 +156,16 @@ file: <PDF file, max 16 MB>
 **Response:**
 ```json
 {"topics": ["Abstract", "Introduction", "Methodology", "Results"]}
+```
+
+### Upload Progress (Polling)
+```http
+GET /upload-status
+```
+
+**Response:**
+```json
+{"step": 2, "total": 3, "message": "Detecting sections..."}
 ```
 
 ### Get Summary
@@ -201,18 +189,21 @@ Content-Type: application/json
 ## 🏗️ Project Structure
 
 ```
-ai-research-paper-analyzer/
-├── app.py                    # Flask application
+AI-RESEARCH-PAPER-ANALYZER/
+├── app.py                          # Flask app with lazy-loaded LLM & embeddings
 ├── src/
-│   ├── load_and_extract_text.py
-│   ├── detect_and_split_sections.py
-│   ├── get_summary.py
-│   ├── create_vector_db.py
-│   └── RAG_retrival_chain.py
-├── templates/index.html
+│   ├── load_and_extract_text.py    # PDF text extraction & section parsing
+│   ├── detect_and_split_sections.py # Section splitting logic
+│   ├── get_summary.py              # LLM-powered summary generation
+│   ├── create_vector_db.py         # FAISS vector database creation
+│   ├── RAG_retrival_chain.py       # RAG chain for Q&A chat
+│   └── analysis_utils.py           # Keyword, citation & topic utilities
+├── templates/index.html            # Frontend UI
+├── data_samples/                   # Sample extracted JSON data
+├── .env.example                    # Environment variable template
 ├── requirements.txt
-├── Procfile                  # For Render/Heroku
-├── render.yaml               # Render config
+├── Procfile                        # For Render/Heroku
+├── render.yaml                     # Render deployment config
 └── runtime.txt
 ```
 
@@ -224,18 +215,24 @@ ai-research-paper-analyzer/
 |----------|----------|---------|-------------|
 | `GROQ_API_KEY` | ✅ Yes | - | Your Groq API key |
 | `COHERE_API_KEY` | ⭐ Recommended | - | Cohere API for cloud embeddings |
-| `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Groq model |
+| `FLASK_SECRET_KEY` | No | `AI_researchpaper_analyzer` | Flask session secret key |
+| `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Groq LLM model name |
 | `EMBEDDING_MODEL` | No | `all-MiniLM-L6-v2` | HuggingFace model (fallback) |
+| `ALLOWED_ORIGINS` | No | `*` | CORS allowed origins |
+| `FLASK_DEBUG` | No | `False` | Enable Flask debug mode |
 
 ---
 
 ## 🛡️ Security
 
-- ✅ Path traversal protection
-- ✅ XSS prevention
-- ✅ Rate limiting (30 req/min for chat)
+- ✅ Path traversal protection (`secure_filename`)
+- ✅ XSS prevention (`escapeHtml` on user input)
+- ✅ Rate limiting (200 req/hour, 10 uploads/min, 30 chats/min)
 - ✅ File size limits (16 MB)
-- ✅ Session isolation
+- ✅ PDF-only file validation
+- ✅ Session isolation per user
+- ✅ CORS configured
+- ✅ Auto-cleanup of uploaded files
 
 ---
 

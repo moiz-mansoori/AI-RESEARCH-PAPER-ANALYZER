@@ -50,10 +50,10 @@ Always return list of dictionaries only, no preamble.
     return sections
 
 
-def split_sections_with_content(text: str, detected_sections: List[Dict]) -> List[Dict]:
+def split_sections_with_content(text: str, detected_sections: List[Dict]) -> Dict[str, str]:
     """
     Split text into sections/subsections using detected start positions.
-    Returns a list of dicts with: section, subsection (if any), start, content.
+    Returns a dictionary with: section/subsection name -> content.
     """
     if not detected_sections:
         return {"Full_Paper" : text}
@@ -66,14 +66,10 @@ def split_sections_with_content(text: str, detected_sections: List[Dict]) -> Lis
         start = sec["start"]
         end = detected_sections[i + 1]["start"] if i + 1 < len(detected_sections) else len(text)
 
-        # Section details
-        section_name = sec["section"]
-        subsection_name = sec.get("subsection", None)
-        section_text = text[start:end].strip()
+        # Use subsection name if available, otherwise section name
+        name = sec.get("subsection") or sec["section"]
+        content = text[start:end].strip()
 
-        results[section_name] = section_text
-
-        if subsection_name:
-            results[subsection_name] = results.pop(section_name)
+        results[name] = content
 
     return results

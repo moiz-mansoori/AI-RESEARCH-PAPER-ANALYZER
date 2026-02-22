@@ -10,6 +10,8 @@ services:
     envVars:
       - key: GROQ_API_KEY
         sync: false
+      - key: COHERE_API_KEY
+        sync: false
       - key: LLM_MODEL
         value: llama-3.3-70b-versatile
       - key: EMBEDDING_MODEL

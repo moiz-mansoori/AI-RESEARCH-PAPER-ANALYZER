@@ -1,27 +1,17 @@
 # src/RAG_retrival_chain.py
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-
 
 def format_docs(docs):
     """Format retrieved documents into a single string."""
     return "\n\n".join(doc.page_content for doc in docs)
 
-
 def get_qa_chain(vectordb, llm):
     """
     Create a RAG-based QA chain for answering questions about research papers.
-    Uses modern LangChain LCEL pattern with langchain_core imports only.
-    
-    Args:
-        vectordb: FAISS vector database with embedded document chunks
-        llm: Language model for generating responses
-        
-    Returns:
-        Retrieval chain configured for research paper analysis
     """
-    
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.runnables import RunnablePassthrough
+
     # Configure retriever with proper parameters
     retriever = vectordb.as_retriever(
         search_type="similarity",
@@ -63,7 +53,6 @@ ANSWER:""")
     ])
     
     # Build LCEL chain using RunnablePassthrough
-    # This pattern retrieves docs, formats them, and passes to LLM
     chain = (
         {
             "context": retriever | format_docs,
