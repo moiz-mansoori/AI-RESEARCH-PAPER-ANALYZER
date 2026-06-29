@@ -111,7 +111,7 @@ def get_session_id():
     return session['session_id']
 
 def get_user_data(session_id):
-    """Get user data for a session, or create empty data structure."""
+    """Get user data for a session, or create empty data structure. Loads from disk if missing."""
     if session_id not in user_sessions:
         user_sessions[session_id] = {
             'full_text': '',
@@ -119,6 +119,21 @@ def get_user_data(session_id):
             'vector_db': None,
             'pages': None
         }
+        
+        # Try to load metadata from disk (Fixes Gunicorn multi-worker state loss on Render)
+        meta_path = f"vector_dbs/{session_id}/metadata.json"
+        if os.path.exists(meta_path):
+            try:
+                import json
+                with open(meta_path, 'r') as f:
+                    meta = json.load(f)
+                    user_sessions[session_id]['full_text'] = meta.get('full_text', '')
+                    user_sessions[session_id]['topics'] = meta.get('topics')
+                    user_sessions[session_id]['pages'] = meta.get('pages')
+                logger.info(f"Successfully recovered metadata from disk for session {session_id}")
+            except Exception as e:
+                logger.error(f"Failed to load metadata from disk: {e}")
+                
     return user_sessions[session_id]
 
 def cleanup_old_vector_dbs(db_root="vector_dbs", max_age_hours=24):
@@ -218,6 +233,20 @@ def upload_pdf():
             pages=pages
         )
         logger.info("[Step 4/4] FAISS vector database built and loaded successfully.")
+
+        # Save metadata to disk for cross-worker persistence on Render
+        try:
+            import json
+            meta_path = os.path.join(db_path, "metadata.json")
+            with open(meta_path, "w") as f:
+                json.dump({
+                    "full_text": extracted_text,
+                    "topics": section_with_content,
+                    "pages": pages
+                }, f)
+            logger.info("Saved session metadata to disk for cross-worker persistence.")
+        except Exception as e:
+            logger.error(f"Failed to save metadata: {e}")
 
         # Clean up temporary uploaded file
         if filepath and os.path.exists(filepath):
