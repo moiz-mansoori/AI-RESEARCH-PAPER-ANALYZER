@@ -4,16 +4,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def create_vector_db(text, embedder, db_path="research_paper_vector_db"):
+def create_vector_db(text, embedder, db_path="research_paper_vector_db", pages=None):
     """
     Create a FAISS vector database from text content.
+    If 'pages' is provided as a list of dicts with 'page_num' and 'text',
+    it will create chunks with page number metadata for citations.
     """
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from langchain_community.vectorstores import FAISS
     from langchain_core.documents import Document
 
-    doc = Document(page_content=text)
-    
     # Split into chunks with optimized settings for research papers
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,       # Larger chunks for better context
@@ -22,7 +22,25 @@ def create_vector_db(text, embedder, db_path="research_paper_vector_db"):
         length_function=len
     )
     
-    docs = splitter.split_documents([doc])
+    docs = []
+    if pages:
+        logger.info(f"Creating vector DB from {len(pages)} pages with metadata...")
+        for page_data in pages:
+            page_num = page_data.get("page_num", 1)
+            page_text = page_data.get("text", "")
+            if page_text.strip():
+                # Split this specific page's text
+                page_chunks = splitter.split_text(page_text)
+                for chunk in page_chunks:
+                    docs.append(Document(
+                        page_content=chunk,
+                        metadata={"page": page_num}
+                    ))
+    else:
+        logger.info("No page structure provided, creating vector DB from raw full text...")
+        doc = Document(page_content=text)
+        docs = splitter.split_documents([doc])
+        
     logger.info(f"Split document into {len(docs)} chunks")
     
     # Create FAISS vector database

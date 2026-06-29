@@ -9,7 +9,7 @@
 
 **Upload academic papers, extract key insights, and chat with your research using AI.**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Deployment](#-free-deployment-option) • [API Reference](#-api-reference)
+[Features](#-features) • [Quick Start](#-quick-start) • [Deployment](#-deployment) • [API Reference](#-api-reference)
 
 </div>
 
@@ -30,10 +30,10 @@ Reading research papers is time-consuming and challenging:
 ### The Solution
 
 This tool uses **Retrieval-Augmented Generation (RAG)** to:
-1. **Extract** all text and sections from your PDF
-2. **Understand** the paper using vector embeddings
+1. **Extract** all text, sections, and page numbers from your PDF
+2. **Understand** the paper using FAISS vector embeddings
 3. **Summarize** any section in simple terms
-4. **Answer questions** about the paper accurately
+4. **Answer questions** about the paper accurately, citing the exact page numbers
 
 ---
 
@@ -41,13 +41,14 @@ This tool uses **Retrieval-Augmented Generation (RAG)** to:
 
 | Feature | Description |
 |---------|-------------|
-| 📄 **PDF Upload & Analysis** | Drag & drop research papers (up to 16 MB), with real-time progress tracking |
-| 🗂️ **Auto Section Detection** | Automatically finds Abstract, Introduction, Methods, Results, etc. using fast regex |
-| 🧠 **AI Summarization** | Generate detailed summaries for any section using Llama 3.3 70B |
-| 💬 **RAG-Powered Chat** | Ask questions about your paper with context-aware responses from FAISS vector search |
-| 🧪 **Hybrid Knowledge** | If info isn't in the paper, AI provides general knowledge with clear distinction |
-| ⚡ **Instant Startup** | Lazy-loaded LLM & embeddings — server starts in seconds |
-| 🔒 **Production-Ready** | Rate limiting, input validation, CORS, XSS protection, and session isolation |
+| 🎨 **Premium Mobile-First UI** | Sleek dark-mode interface with glassmorphism, dynamic Chart.js dashboards, and a seamless drag-and-drop experience. |
+| 📄 **PDF Analysis & Metadata** | Extracts text and maps content to exact page numbers for accurate citations. |
+| 🗂️ **Auto Section Detection** | Automatically detects Abstract, Introduction, Methods, Results, etc., with robust fallbacks. |
+| 🧠 **AI Summarization** | Generate detailed, formatted markdown summaries for any section using Llama 3.3 70B. |
+| 💬 **RAG-Powered Chat** | Ask questions using FAISS with **Maximal Marginal Relevance (MMR)** search for diverse and highly accurate answers. |
+| 🎯 **Strict Grounding** | AI provides exact `[Source Page X]` citations and strictly refuses to hallucinate if the info is missing from the paper. |
+| ⚡ **Production-Ready** | Lazy-loaded models, vector DB auto-cleanup (24h expiry), rate limiting, and robust error handling for scanned/encrypted PDFs. |
+| 🐳 **Deployment Ready** | Supports standard Python hosting, native Render deployments, and comes with a `Dockerfile` for containerized setups. |
 
 ### Example Questions You Can Ask
 - "What is the main contribution of this paper?"
@@ -104,7 +105,7 @@ LLM_MODEL=llama-3.3-70b-versatile
 EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 ```
 
-> **Note:** If `COHERE_API_KEY` is not set, the app will use local HuggingFace embeddings (uses more RAM).
+> **Note:** If `COHERE_API_KEY` is not set, the app will gracefully fall back to using local HuggingFace embeddings.
 
 ### Run Locally
 
@@ -116,11 +117,11 @@ Visit **http://localhost:5000** in your browser.
 
 ---
 
-## 🌐 Free Deployment Option
+## 🌐 Deployment
 
-### Render.com ⭐
+### Option A: Render.com (Recommended) ⭐
 
-**Best for:** Easy deployment, auto-deploy from GitHub
+**Best for:** Easy deployment, auto-deploy directly from GitHub
 
 | Feature | Details |
 |---------|---------|
@@ -133,13 +134,16 @@ Visit **http://localhost:5000** in your browser.
 1. Push code to GitHub
 2. Go to [render.com](https://render.com) → New → Web Service
 3. Connect your GitHub repo
-4. Set environment variables:
-   - `GROQ_API_KEY` = your key
-   - `COHERE_API_KEY` = your key (recommended)
-   - `FLASK_SECRET_KEY` = `AI_researchpaper_analyzer`
-5. Deploy!
+4. Set environment variables (`GROQ_API_KEY`, `COHERE_API_KEY`, `FLASK_SECRET_KEY`)
+5. Deploy! Every time you push to the `main` branch, Render will automatically adapt the new UI and backend changes.
 
-> ⚠️ **Note:** Free tier sleeps after 15 min. First request takes ~30-60s to wake.
+### Option B: Docker
+
+A `Dockerfile` and `docker-compose.yml` are included for effortless deployment on any VPS or local machine.
+
+```bash
+docker-compose up --build -d
+```
 
 ---
 
@@ -153,19 +157,20 @@ Content-Type: multipart/form-data
 file: <PDF file, max 16 MB>
 ```
 
-**Response:**
-```json
-{"topics": ["Abstract", "Introduction", "Methodology", "Results"]}
-```
-
 ### Upload Progress (Polling)
+Tracks real-time progress while building the FAISS vector database.
 ```http
 GET /upload-status
 ```
 
 **Response:**
 ```json
-{"step": 2, "total": 3, "message": "Detecting sections..."}
+{"step": 2, "total": 4, "message": "Detecting sections..."}
+```
+
+### Get Paper Stats
+```http
+GET /stats
 ```
 
 ### Get Summary
@@ -188,51 +193,34 @@ Content-Type: application/json
 
 ## 🏗️ Project Structure
 
-```
+```text
 AI-RESEARCH-PAPER-ANALYZER/
 ├── app.py                          # Flask app with lazy-loaded LLM & embeddings
 ├── src/
-│   ├── load_and_extract_text.py    # PDF text extraction & section parsing
-│   ├── detect_and_split_sections.py # Section splitting logic
+│   ├── load_and_extract_text.py    # PDF text extraction & page numbering
+│   ├── detect_and_split_sections.py # Advanced section splitting logic
 │   ├── get_summary.py              # LLM-powered summary generation
-│   ├── create_vector_db.py         # FAISS vector database creation
-│   ├── RAG_retrival_chain.py       # RAG chain for Q&A chat
-│   └── analysis_utils.py           # Keyword, citation & topic utilities
-├── templates/index.html            # Frontend UI
-├── data_samples/                   # Sample extracted JSON data
-├── .env.example                    # Environment variable template
+│   ├── create_vector_db.py         # FAISS vector DB creation & MMR integration
+│   ├── RAG_retrival_chain.py       # RAG chain for strictly grounded Q&A
+│   └── analysis_utils.py           # Keyword & topic distribution utilities
+├── templates/index.html            # Premium mobile-first Frontend UI
+├── Dockerfile                      # Containerized deployment config
+├── docker-compose.yml              # Multi-container local orchestration
 ├── requirements.txt
-├── Procfile                        # For Render/Heroku
-├── render.yaml                     # Render deployment config
-└── runtime.txt
+├── render.yaml                     # Render deployment configuration
+└── Procfile                        # Heroku/Render process definitions
 ```
 
 ---
 
-## 🔧 Environment Variables
+## 🛡️ Security & Reliability
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GROQ_API_KEY` | ✅ Yes | - | Your Groq API key |
-| `COHERE_API_KEY` | ⭐ Recommended | - | Cohere API for cloud embeddings |
-| `FLASK_SECRET_KEY` | No | `AI_researchpaper_analyzer` | Flask session secret key |
-| `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Groq LLM model name |
-| `EMBEDDING_MODEL` | No | `all-MiniLM-L6-v2` | HuggingFace model (fallback) |
-| `ALLOWED_ORIGINS` | No | `*` | CORS allowed origins |
-| `FLASK_DEBUG` | No | `False` | Enable Flask debug mode |
-
----
-
-## 🛡️ Security
-
-- ✅ Path traversal protection (`secure_filename`)
-- ✅ XSS prevention (`escapeHtml` on user input)
-- ✅ Rate limiting (200 req/hour, 10 uploads/min, 30 chats/min)
-- ✅ File size limits (16 MB)
-- ✅ PDF-only file validation
-- ✅ Session isolation per user
-- ✅ CORS configured
-- ✅ Auto-cleanup of uploaded files
+- ✅ **Strict Anti-Hallucination:** RAG prompt actively blocks the LLM from making up facts.
+- ✅ **Graceful Error Handling:** Detects and safely rejects empty, scanned, or encrypted PDFs.
+- ✅ **State Isolation:** FAISS vector DBs are strictly scoped per-user session.
+- ✅ **Auto-Cleanup:** Old vector databases and temporary files are swept automatically after 24 hours.
+- ✅ **XSS & Traversal Prevention:** Uses `secure_filename` and UI HTML escaping.
+- ✅ **Rate Limiting:** Protects `/upload`, `/chat`, and `/summary` from abuse.
 
 ---
 

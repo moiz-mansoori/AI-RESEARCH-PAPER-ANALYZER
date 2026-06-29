@@ -1,12 +1,17 @@
 # src/RAG_retrival_chain.py
 
 def format_docs(docs):
-    """Format retrieved documents into a single string."""
-    return "\n\n".join(doc.page_content for doc in docs)
+    """Format retrieved documents into a single string with page citations."""
+    formatted = []
+    for doc in docs:
+        page_num = doc.metadata.get("page", "Unknown")
+        formatted.append(f"[Source Page {page_num}]:\n{doc.page_content}")
+    return "\n\n---\n\n".join(formatted)
 
 def get_qa_chain(vectordb, llm):
     """
     Create a RAG-based QA chain for answering questions about research papers.
+    Answers strictly using context and cites page numbers.
     """
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.output_parsers import StrOutputParser
@@ -14,36 +19,27 @@ def get_qa_chain(vectordb, llm):
 
     # Configure retriever with proper parameters
     retriever = vectordb.as_retriever(
-        search_type="similarity",
+        search_type="mmr",
         search_kwargs={
-            "k": 4  # Return top 4 most relevant chunks
+            "k": 5,          # Return top 5 most relevant and diverse chunks
+            "fetch_k": 20    # Fetch 20 chunks to select from
         }
     )
     
-    # Improved prompt for research paper analysis with fallback to general knowledge
+    # Strict prompt for research paper analysis enforcing context-only answers
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are an AI research assistant analyzing an academic paper.
 
-Your primary goal is to answer questions using the context from the uploaded paper. However, if the information is not available in the paper, you should still help the user by providing your general knowledge.
+Your primary goal is to answer questions using ONLY the provided context from the uploaded paper.
 
 INSTRUCTIONS:
-1. FIRST, search the provided context for relevant information.
-2. If the answer IS found in the context:
-   - Provide a clear and concise response based on the paper.
-   - Quote relevant passages when appropriate to support your answer.
-   - Use clear formatting with bullet points or numbered lists when listing multiple items.
-
-3. If the answer is NOT found in the context:
-   - Start with: "📚 I couldn't find this specific information in the uploaded research paper."
-   - Then add: "However, based on my general knowledge:"
-   - Provide a helpful answer from your training knowledge.
-   - Make it clear this is general knowledge, not from the paper.
-
-4. If the answer is PARTIALLY available:
-   - Provide what you found in the paper first.
-   - Then supplement with general knowledge if helpful, clearly marking it as such.
-
-Remember: Always be helpful! Never leave the user with just "I don't know" - provide value either from the paper or your general knowledge."""),
+1. Search the provided context for relevant information to answer the question.
+2. You must strictly base your answer on the provided context. If the answer cannot be found or inferred from the context, respond with:
+   "📚 I couldn't find this specific information in the uploaded research paper."
+   Do NOT make up facts, hallucinate, or use general knowledge to answer questions that are not supported by the document.
+3. Keep your answers factual, grounded, and concise.
+4. Cite the source page numbers (e.g., "(Page 5)" or "According to Page 3...") when presenting findings from the paper.
+5. Format your answers clearly with bullet points or numbered lists when appropriate."""),
         ("human", """CONTEXT (from the research paper):
 {context}
 

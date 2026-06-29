@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import logging
+import time
+import shutil
 from dotenv import load_dotenv
 
 # Configure logging
@@ -15,17 +17,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Immediate feedback for the user
-print("\n🚀 Starting AI Research Paper Analyzer server...")
-print("📝 Loading environment and configurations...")
+print("\n[Server] Starting AI Research Paper Analyzer server...")
+print("[Server] Loading environment and configurations...")
 
 load_dotenv()
 
-from src.load_and_extract_text import extract_text_from_pdf, extract_pdf_sections
+from src.load_and_extract_text import extract_text_from_pdf, extract_pdf_sections, extract_pages_from_pdf
 from src.detect_and_split_sections import split_sections_with_content
 from src.get_summary import generate_detailed_summary
-from src.create_vector_db import create_vector_db
+from src.create_vector_db import create_vector_db, load_vector_db
 from src.RAG_retrival_chain import get_qa_chain
-from src.analysis_utils import get_keyword_frequency, extract_citations, get_topic_distribution
+from src.analysis_utils import get_keyword_frequency, get_topic_distribution
 
 app = Flask(__name__)
 
@@ -114,9 +116,27 @@ def get_user_data(session_id):
         user_sessions[session_id] = {
             'full_text': '',
             'topics': None,
-            'vector_db': None
+            'vector_db': None,
+            'pages': None
         }
     return user_sessions[session_id]
+
+def cleanup_old_vector_dbs(db_root="vector_dbs", max_age_hours=24):
+    """Clean up vector database folders older than max_age_hours."""
+    if not os.path.exists(db_root):
+        return
+    now = time.time()
+    max_age_seconds = max_age_hours * 3600
+    try:
+        for folder_name in os.listdir(db_root):
+            folder_path = os.path.join(db_root, folder_name)
+            if os.path.isdir(folder_path):
+                mtime = os.path.getmtime(folder_path)
+                if (now - mtime) > max_age_seconds:
+                    logger.info(f"Cleaning up old vector DB directory: {folder_path}")
+                    shutil.rmtree(folder_path)
+    except Exception as e:
+        logger.error(f"Error cleaning up old vector databases: {e}")
 
 @app.route('/')
 def index():
@@ -126,15 +146,19 @@ def index():
 def upload_status():
     """Return the current upload processing progress."""
     session_id = get_session_id()
-    progress = upload_progress.get(session_id, {"step": 0, "total": 3, "message": "Waiting..."})
+    progress = upload_progress.get(session_id, {"step": 0, "total": 4, "message": "Waiting..."})
     return jsonify(progress)
 
 @app.route('/upload', methods=['POST'])
 @limiter.limit("10 per minute")
 def upload_pdf():
-    """Handle PDF upload and extract topics — fast path, no LLM."""
+    """Handle PDF upload, extract sections, and build FAISS vector database during upload."""
+    filepath = None
+    session_id = get_session_id()
     try:
-        session_id = get_session_id()
+        # Run storage cleanup sweep before processing new upload
+        cleanup_old_vector_dbs()
+
         user_data = get_user_data(session_id)
         file = request.files.get('file')
 
@@ -155,43 +179,76 @@ def upload_pdf():
         logger.info(f"Processing PDF: {filename} for session: {session_id}")
 
         # --- Step 1: Extract text ---
-        upload_progress[session_id] = {"step": 1, "total": 3, "message": "Extracting text from PDF..."}
-        logger.info("[Step 1/3] Extracting text from PDF...")
+        upload_progress[session_id] = {"step": 1, "total": 4, "message": "Extracting text from PDF..."}
+        logger.info("[Step 1/4] Extracting text from PDF...")
+        
+        # This will raise a ValueError if PDF is encrypted, corrupted, empty, or scanned
         extracted_text = extract_text_from_pdf(filepath)
-        if not extracted_text or not extracted_text.strip():
-            os.remove(filepath)
-            upload_progress.pop(session_id, None)
-            return jsonify({"error": "Could not extract text from PDF."}), 400
-        logger.info(f"[Step 1/3] Done. Extracted {len(extracted_text)} characters.")
-
+        
+        # Extract pages with numbers for citations
+        pages = extract_pages_from_pdf(filepath)
+        
+        logger.info(f"[Step 1/4] Done. Extracted {len(extracted_text)} characters.")
         user_data['full_text'] = extracted_text
+        user_data['pages'] = pages
 
-        # --- Step 2: Detect sections (fast regex, no LLM) ---
-        upload_progress[session_id] = {"step": 2, "total": 3, "message": "Detecting sections..."}
-        logger.info("[Step 2/3] Detecting sections...")
+        # --- Step 2: Detect sections ---
+        upload_progress[session_id] = {"step": 2, "total": 4, "message": "Detecting sections..."}
+        logger.info("[Step 2/4] Detecting sections...")
         extracted_sections = extract_pdf_sections(full_text=extracted_text)
-        logger.info(f"[Step 2/3] Done. Found {len(extracted_sections)} sections.")
+        logger.info(f"[Step 2/4] Done. Found {len(extracted_sections)} sections.")
 
         # --- Step 3: Split content into topics ---
-        upload_progress[session_id] = {"step": 3, "total": 3, "message": "Organizing topics..."}
-        logger.info("[Step 3/3] Splitting section content...")
+        upload_progress[session_id] = {"step": 3, "total": 4, "message": "Organizing topics..."}
+        logger.info("[Step 3/4] Splitting section content...")
         section_with_content = split_sections_with_content(extracted_text, extracted_sections)
-        logger.info(f"[Step 3/3] Done. Final topics: {list(section_with_content.keys())}")
-
+        logger.info(f"[Step 3/4] Done. Final topics: {list(section_with_content.keys())}")
         user_data['topics'] = section_with_content
-        user_data['vector_db'] = None
 
-        try:
-            os.remove(filepath)
-        except OSError:
-            pass
+        # --- Step 4: Build vector database ---
+        upload_progress[session_id] = {"step": 4, "total": 4, "message": "Building vector database (Generating embeddings)..."}
+        logger.info("[Step 4/4] Building FAISS vector database...")
+        db_path = f"vector_dbs/{session_id}"
+        
+        # Build vector database with page numbers for citations
+        user_data['vector_db'] = create_vector_db(
+            text=extracted_text,
+            embedder=get_embedder(),
+            db_path=db_path,
+            pages=pages
+        )
+        logger.info("[Step 4/4] FAISS vector database built and loaded successfully.")
+
+        # Clean up temporary uploaded file
+        if filepath and os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except OSError:
+                pass
 
         upload_progress.pop(session_id, None)
         return jsonify({"topics": list(section_with_content.keys())})
+
+    except ValueError as val_err:
+        # Handle custom validation errors (scanned PDF, empty PDF, encrypted, etc.)
+        logger.warning(f"Validation error processing PDF: {val_err}")
+        if filepath and os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except OSError:
+                pass
+        upload_progress.pop(session_id, None)
+        return jsonify({"error": str(val_err)}), 400
+
     except Exception as e:
         logger.error(f"Upload error: {str(e)}")
         import traceback
         traceback.print_exc()
+        if filepath and os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except OSError:
+                pass
         upload_progress.pop(session_id, None)
         return jsonify({"error": f"Failed to process PDF: {str(e)}"}), 500
 
@@ -241,13 +298,13 @@ def chat():
         
         logger.info(f"Chat query from session {session_id}: {user_message[:50]}...")
         
+        # Recover vector DB if server was restarted but index still exists on disk
         if not user_data['vector_db']:
             db_path = f"vector_dbs/{session_id}"
-            user_data['vector_db'] = create_vector_db(
-                text=user_data['full_text'],
-                embedder=get_embedder(),
-                db_path=db_path
-            )
+            user_data['vector_db'] = load_vector_db(embedder=get_embedder(), db_path=db_path)
+            
+            if not user_data['vector_db']:
+                return jsonify({"error": "Session vector database not found. Please re-upload the PDF."}), 400
         
         chain = get_qa_chain(vectordb=user_data['vector_db'], llm=get_llm())
         result = chain.invoke({"input": user_message})
@@ -269,13 +326,11 @@ def get_stats():
         sections = user_data['topics'] or {}
         
         keywords = get_keyword_frequency(full_text)
-        citations = extract_citations(full_text)
         topics_dist = get_topic_distribution(sections)
         
         return jsonify({
             "keywords": keywords,
-            "citations_count": len(citations),
-            "citations": citations[:10],
+            "total_pages": len(user_data['pages']) if user_data.get('pages') else 0,
             "topic_distribution": topics_dist
         })
     except Exception as e:
@@ -291,6 +346,6 @@ def ratelimit_handler(e):
     return jsonify({"error": "Rate limit exceeded. Please slow down."}), 429
 
 if __name__ == "__main__":
-    print("✨ Server is ready! Waiting for requests on http://127.0.0.1:5000")
+    print("[Server] Server is ready! Waiting for requests on http://127.0.0.1:5000")
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
     app.run(debug=debug_mode)
